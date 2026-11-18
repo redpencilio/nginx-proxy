@@ -1,0 +1,31 @@
+matrix:
+  include:
+    - dockerfile: Dockerfile.debian
+      tag_suffix: ""
+    - dockerfile: Dockerfile.alpine
+      tag_suffix: "-alpine"
+    - dockerfile: Dockerfile.dockergen
+      tag_suffix: "-dockergen"
+
+steps:
+  build-and-push:
+    image: redpencil/plugin-docker-buildx:latest
+    pull: true
+    settings:
+      repo: ${CI_REPO/redpencilio/redpencil}
+      dockerfile: ${dockerfile}
+      tags: "feature-${CI_COMMIT_BRANCH##feature/}${tag_suffix}"
+      platforms:
+        - linux/amd64
+        - linux/arm64
+      build_args:
+        - "NGINX_PROXY_VERSION=feature-${CI_COMMIT_BRANCH##feature/}"
+      username:
+        from_secret: docker_username
+      password:
+        from_secret: docker_password
+      ssh_key:
+        from_secret: ssh_key
+when:
+  - event: push
+    branch: [feature/*]
